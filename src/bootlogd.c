@@ -68,11 +68,6 @@ int didnl = 1;
 int createlogfile = 0;
 int syncalot = 0;
 
-struct line {
-	char buf[256];
-	int pos;
-} line;
-
 /*
  *	Console devices as listed on the kernel command line and
  *	the mapping to actual devices in /dev
@@ -351,63 +346,34 @@ int consolename(char *res, int rlen)
  */
 void writelog(FILE *fp, unsigned char *ptr, int len)
 {
-	time_t		t;
-	char		*s;
-	char		tmp[8];
-	int		olen = len;
-	int		dosync = 0;
-	int		tlen;
+	int dosync = 0;
+	int i;
+	static int first_run = 1;
 
-	while (len > 0) {
-		tmp[0] = 0;
-		if (didnl) {
+	for (i = 0; i < len; i++) {
+		int ignore = 0;
+
+		/* prepend date to every line */
+		if (*(ptr-1) == '\n' || first_run) {
+			time_t t;
+			char *s;
 			time(&t);
 			s = ctime(&t);
 			fprintf(fp, "%.24s: ", s);
-			didnl = 0;
+			dosync = 1;
+			first_run = 0;
 		}
-		switch (*ptr) {
-			case 27: /* ESC */
-				strcpy(tmp, "^[");
-				break;
-			case '\r':
-				line.pos = 0;
-				break;
-			case 8: /* ^H */
-				if (line.pos > 0) line.pos--;
-				break;
-			case '\n':
-				didnl = 1;
-				dosync = 1;
-				break;
-			case '\t':
-				line.pos += (line.pos / 8 + 1) * 8;
-				if (line.pos >= (int)sizeof(line.buf))
-					line.pos = sizeof(line.buf) - 1;
-				break;
-			case  32 ... 127:
-			case 161 ... 255:
-				tmp[0] = *ptr;
-				tmp[1] = 0;
-				break;
-			default:
-				sprintf(tmp, "\\%03o", *ptr);
-				break;
+
+		if (*ptr == '\r') {
+			ignore = 1;
 		}
+
+		if (!ignore) {
+			fwrite(ptr, sizeof(char), 1, fp);
+		}
+
 		ptr++;
-		len--;
-
-		tlen = strlen(tmp);
-		if (tlen && (line.pos + tlen < (int)sizeof(line.buf))) {
-			memcpy(line.buf + line.pos, tmp, tlen);
-			line.pos += tlen;
-		}
-		if (didnl) {
-			fprintf(fp, "%s\n", line.buf);
-			memset(&line, 0, sizeof(line));
-		}
 	}
-
 	if (dosync) {
 		fflush(fp);
 		if (syncalot) {
@@ -415,7 +381,7 @@ void writelog(FILE *fp, unsigned char *ptr, int len)
 		}
 	}
 
-	outptr += olen;
+	outptr += len;
 	if (outptr >= endptr)
 		outptr = ringbuf;
 
