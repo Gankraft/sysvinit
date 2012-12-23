@@ -8,50 +8,17 @@
 # Version:	@(#)Makefile  2.85-13  23-Mar-2004  miquels@cistron.nl
 #
 
-CPPFLAGS =
+CPPFLAGS = -D'UTMP_FILE="/dev/null"' -D'WTMP_FILE="/dev/null"' -D'BTMP_FILE="/dev/null"'
 CFLAGS	?= -ansi -O2 -fomit-frame-pointer
 override CFLAGS += -W -Wall -D_GNU_SOURCE
-STATIC	=
 
 # For some known distributions we do not build all programs, otherwise we do.
 BIN	=
 SBIN	= init halt shutdown runlevel killall5 fstab-decode
-USRBIN	= last mesg
 
-MAN1	= last.1 lastb.1 mesg.1
 MAN5	= initscript.5 inittab.5
 MAN8	= halt.8 init.8 killall5.8 pidof.8 poweroff.8 reboot.8 runlevel.8
 MAN8	+= shutdown.8 telinit.8 fstab-decode.8
-
-ifeq ($(DISTRO),)
-BIN	+= mountpoint
-SBIN	+= sulogin bootlogd
-USRBIN	+= utmpdump wall
-MAN1	+= utmpdump.1 mountpoint.1 wall.1
-MAN8	+= sulogin.8 bootlogd.8
-endif
-
-ifeq ($(DISTRO),Debian)
-CPPFLAGS+= -DACCTON_OFF
-BIN	+= mountpoint
-SBIN	+= sulogin bootlogd
-MAN1	+= mountpoint.1
-MAN8	+= sulogin.8 bootlogd.8
-endif
-
-ifeq ($(DISTRO),Owl)
-USRBIN	+= wall
-MAN1	+= wall.1
-endif
-
-ifeq ($(DISTRO),SuSE)
-CPPFLAGS+= -DUSE_SYSFS -DSANE_TIO -DSIGINT_ONLYONCE -DUSE_ONELINE
-BIN	+= mountpoint
-SBIN	+= sulogin
-USRBIN	+= utmpdump
-MAN1	+= utmpdump.1 mountpoint.1
-MAN8	+= sulogin.8
-endif
 
 ID		= $(shell id -u)
 BIN_OWNER	= root
@@ -89,7 +56,7 @@ all:		$(BIN) $(SBIN) $(USRBIN)
 #%.o: %.c
 #	$(CC) $(CFLAGS) $(CPPFLAGS) -c $^ -o $@
 
-init:		LDLIBS += $(INITLIBS) $(STATIC)
+init:		LDLIBS += $(INITLIBS)
 init:		init.o init_utmp.o
 
 halt:		halt.o ifdown.o hddown.o utmp.o reboot.h
@@ -104,7 +71,7 @@ utmpdump:	utmpdump.o
 
 runlevel:	runlevel.o
 
-sulogin:	LDLIBS += $(SULOGINLIBS) $(STATIC)
+sulogin:	LDLIBS += $(SULOGINLIBS)
 sulogin:	sulogin.o
 
 wall:		dowall.o wall.o
