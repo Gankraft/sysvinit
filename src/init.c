@@ -52,6 +52,8 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 
+#include "ttydefaults.h"
+
 #ifdef WITH_SELINUX
 #  include <selinux/selinux.h>
 #  include <sys/mount.h>
