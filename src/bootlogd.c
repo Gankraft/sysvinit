@@ -349,6 +349,7 @@ void writelog(FILE *fp, unsigned char *ptr, int len)
 	int dosync = 0;
 	int i;
 	static int first_run = 1;
+	static int inside_esc = 0;
 
 	for (i = 0; i < len; i++) {
 		int ignore = 0;
@@ -364,9 +365,49 @@ void writelog(FILE *fp, unsigned char *ptr, int len)
 			first_run = 0;
 		}
 
-		if (*ptr == '\r') {
-			ignore = 1;
+		/* remove escape sequences, but do it in a way that allows us to stop
+		 * in the middle in case the string was cut off */
+		if (inside_esc == 1) {
+			/* first '[' is special because if we encounter it again, it should be considered the final byte */
+			if (*ptr == '[') {
+				/* multi char sequence */
+				ignore = 1;
+				inside_esc = 2;
+			} else {
+				/* single char sequence */
+				if (*ptr >= 64 && *ptr <= 95) {
+					ignore = 1;
+				}
+				inside_esc = 0;
+			}
+		} else if (inside_esc == 2) {
+			switch (*ptr) {
+				case '0' ... '9': /* intermediate chars of escape sequence */
+				case ';':
+				case 32 ... 47:
+					if (inside_esc) {
+						ignore = 1;
+					}
+					break;
+				case 64 ... 126: /* final char of escape sequence */
+					if (inside_esc) {
+						ignore = 1;
+						inside_esc = 0;
+					}
+					break;
+			}
+		} else {
+			switch (*ptr) {
+				case '\r':
+					ignore = 1;
+					break;
+				case 27: /* ESC */
+					ignore = 1;
+					inside_esc = 1;
+					break;
+			}
 		}
+
 
 		if (!ignore) {
 			fwrite(ptr, sizeof(char), 1, fp);
