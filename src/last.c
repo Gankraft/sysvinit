@@ -28,7 +28,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/fcntl.h>
+#include <sys/socket.h>
+#include <fcntl.h>
 #include <time.h>
 #include <stdio.h>
 #include <ctype.h>
