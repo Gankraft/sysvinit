@@ -32,7 +32,7 @@ else
   INSTALL_DATA	= install -m 644
 endif
 INSTALL_DIR	= install -m 755 -d
-MANDIR		= /usr/share/man
+MANDIR		= /doc/man
 
 ifeq ($(WITH_SELINUX),yes)
   SELINUX_DEF	=  -DWITH_SELINUX
@@ -45,7 +45,7 @@ else
 endif
 
 # Additional libs for GNU libc.
-ifneq ($(wildcard /usr/lib*/libcrypt.a),)
+ifneq ($(wildcard /lib*/libcrypt.a),)
   SULOGINLIBS	+= -lcrypt
 endif
 
@@ -106,7 +106,6 @@ distclean:	clobber
 
 install:
 		$(INSTALL_DIR) $(ROOT)/bin/ $(ROOT)/sbin/
-		$(INSTALL_DIR) $(ROOT)/usr/bin/
 		for i in $(BIN); do \
 			$(INSTALL_EXEC) $$i $(ROOT)/bin/ ; \
 		done
@@ -114,7 +113,7 @@ install:
 			$(INSTALL_EXEC) $$i $(ROOT)/sbin/ ; \
 		done
 		for i in $(USRBIN); do \
-			$(INSTALL_EXEC) $$i $(ROOT)/usr/bin/ ; \
+			$(INSTALL_EXEC) $$i $(ROOT)/bin/ ; \
 		done
 		# $(INSTALL_DIR) $(ROOT)/etc/
 		# $(INSTALL_EXEC) initscript.sample $(ROOT)/etc/
@@ -122,11 +121,11 @@ install:
 		ln -sf halt $(ROOT)/sbin/poweroff
 		ln -sf init $(ROOT)/sbin/telinit
 		ln -sf /sbin/killall5 $(ROOT)/bin/pidof
-		if [ ! -f $(ROOT)/usr/bin/lastb ]; then \
-			ln -sf last $(ROOT)/usr/bin/lastb; \
+		if [ ! -f $(ROOT)/bin/lastb ]; then \
+			ln -sf last $(ROOT)/bin/lastb; \
 		fi
-		$(INSTALL_DIR) $(ROOT)/usr/include/
-		$(INSTALL_DATA) initreq.h $(ROOT)/usr/include/
+		$(INSTALL_DIR) $(ROOT)/include/
+		$(INSTALL_DATA) initreq.h $(ROOT)/include/
 		$(INSTALL_DIR) $(ROOT)$(MANDIR)/man1/
 		$(INSTALL_DIR) $(ROOT)$(MANDIR)/man5/
 		$(INSTALL_DIR) $(ROOT)$(MANDIR)/man8/
